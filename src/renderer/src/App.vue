@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive /* ref, onMounted, watch, computed, nextTick, toRaw */ } from 'vue'
+import { reactive, ref /* onMounted, watch, computed, nextTick, toRaw */ } from 'vue'
 import { Leafer, Line } from 'leafer-ui'
 
 const leafer = new Leafer({ view: window })
@@ -13,6 +13,7 @@ leafer.add(line)
 
 const points: { x: number; y: number }[] = []
 const directions = reactive<string[]>([])
+const svgContent = ref('')
 document.addEventListener('mousemove', (e) => {
   points.push({ x: e.x, y: e.y })
   const prePonit = points.at(-2)
@@ -32,6 +33,9 @@ document.addEventListener('mousemove', (e) => {
   }
   if (direction && directions.at(-1) !== direction) {
     directions.push(direction)
+    import(`./assets/images/${directions.join('')}.svg?raw`)
+      .then((res) => (svgContent.value = res.default))
+      .catch(() => (svgContent.value = ''))
   }
   line.set({ points })
 })
@@ -52,7 +56,10 @@ window.api.onSetFirstPoint((_, point) => {
 
 <template>
   <div id="wrapper">
-    <div id="tips">{{ directions.join(' ') }}</div>
+    <div id="tips">
+      <div v-if="svgContent" v-html="svgContent"></div>
+      <div v-else>{{ directions.join('') }}</div>
+    </div>
   </div>
 </template>
 
@@ -69,8 +76,13 @@ window.api.onSetFirstPoint((_, point) => {
     background-color: rgba(0, 0, 0, 0.5);
     border-radius: 10px;
     padding: 25px 50px;
-    font-size: 32px;
+    font-size: 50px;
     color: white;
+    & svg {
+      fill: white;
+      width: 50px;
+      height: 50px;
+    }
   }
 }
 </style>
