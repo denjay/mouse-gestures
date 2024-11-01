@@ -1,10 +1,16 @@
 import { app, shell, BrowserWindow, ipcMain, screen } from 'electron'
-import { join } from 'path'
+import { exec } from 'child_process'
+import { dirname, join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { uIOhook, UiohookKey } from 'uiohook-napi'
 import { Button, mouse, keyboard, Key } from '@nut-tree-fork/nut-js'
 
 import icon from '../../resources/icon.png?asset'
+
+const exeFilePath = app.isPackaged
+  ? join(dirname(app.getPath('exe')), 'resources', 'DisableCapsLock.exe')
+  : join(__dirname, '../../resources/DisableCapsLock.exe')
+exec(exeFilePath)
 
 function createWindow(): void {
   // Create the browser window.
@@ -53,12 +59,12 @@ function createWindow(): void {
       rightKeyPressed = false
     }
   })
+  const scaleFactor = screen.getPrimaryDisplay().scaleFactor
   uIOhook.on('mousemove', async (e) => {
     if (rightKeyPressed && !mainWindow.isVisible()) {
       rightKeyPressed = false
       await mouse.releaseButton(Button.RIGHT)
       uIOhook.keyTap(UiohookKey.Escape)
-      const scaleFactor = screen.getPrimaryDisplay().scaleFactor
       const dipPoint = {
         x: e.x / scaleFactor,
         y: e.y / scaleFactor

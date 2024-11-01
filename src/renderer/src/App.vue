@@ -96,7 +96,9 @@ document.addEventListener('mouseup', async (e) => {
 
 window.api.onSetFirstPoint((_, point) => {
   points.push(point)
-  window.electron.ipcRenderer.send('execMainWindowMethod', 'show')
+  setTimeout(() => {
+    window.electron.ipcRenderer.send('execMainWindowMethod', 'show')
+  }, 100)
 })
 </script>
 
