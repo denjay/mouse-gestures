@@ -4,7 +4,7 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: {
-      onSetFirstPoint: (event) => void
+      onPoint: (event) => void
     }
   }
 }

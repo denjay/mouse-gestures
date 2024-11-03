@@ -2,7 +2,7 @@ import { app, shell, BrowserWindow, ipcMain, screen } from 'electron'
 import { exec } from 'child_process'
 import { dirname, join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { uIOhook, UiohookKey } from 'uiohook-napi'
+import { uIOhook } from 'uiohook-napi'
 import { Button, mouse, keyboard, Key } from '@nut-tree-fork/nut-js'
 
 import icon from '../../resources/icon.png?asset'
@@ -31,8 +31,10 @@ function createWindow(): void {
     }
   })
 
-  ipcMain.on('execMainWindowMethod', (_, methodName) => {
-    mainWindow[methodName]()
+  ipcMain.on('minimizeMainWindow', () => {
+    console.log('minimizeMainWindow::: ')
+    mainWindow.minimize()
+    rightKeyPressed = false
   })
   ipcMain.on('task', (_, task) => {
     if (task.type === 'shortcut') {
@@ -57,20 +59,23 @@ function createWindow(): void {
   uIOhook.on('mouseup', (e) => {
     if (e.button === 2) {
       rightKeyPressed = false
+      if (mainWindow.isVisible()) {
+        mainWindow.minimize()
+      }
     }
   })
   const scaleFactor = screen.getPrimaryDisplay().scaleFactor
   uIOhook.on('mousemove', async (e) => {
-    if (rightKeyPressed && !mainWindow.isVisible()) {
-      rightKeyPressed = false
-      await mouse.releaseButton(Button.RIGHT)
-      uIOhook.keyTap(UiohookKey.Escape)
-      const dipPoint = {
-        x: e.x / scaleFactor,
-        y: e.y / scaleFactor
-      }
-      // 要把第一个点传过去,要不然鼠标移动快了的话,轨迹显示不完整
-      mainWindow.webContents.send('set-first-point', dipPoint)
+    if (!rightKeyPressed) return
+    const dipPoint = {
+      x: e.x / scaleFactor,
+      y: e.y / scaleFactor
+    }
+    // 要把第一个点传过去,要不然鼠标移动快了的话,轨迹显示不完整
+    mainWindow.webContents.send('point', dipPoint)
+    if (!mainWindow.isVisible()) {
+      await mouse.click(Button.LEFT)
+      mainWindow.show()
     }
   })
   uIOhook.start()

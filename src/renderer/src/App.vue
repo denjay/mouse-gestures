@@ -14,31 +14,6 @@ leafer.add(line)
 const points: { x: number; y: number }[] = []
 const directions = reactive<string[]>([])
 const svgContent = ref('')
-document.addEventListener('mousemove', (e) => {
-  points.push({ x: e.x, y: e.y })
-  const prePonit = points.at(-2)
-  const deltaX = e.x - prePonit!.x
-  const deltaY = e.y - prePonit!.y
-  // 过滤掉小于5的移动
-  if (Math.abs(deltaX) < 5 && Math.abs(deltaY) < 5) return
-  let direction = ''
-  if (deltaX > 0 && Math.abs(deltaY) < deltaX) {
-    direction = '→'
-  } else if (deltaX < 0 && Math.abs(deltaY) < Math.abs(deltaX)) {
-    direction = '←'
-  } else if (deltaY > 0 && Math.abs(deltaX) < deltaY) {
-    direction = '↓'
-  } else if (deltaY < 0 && Math.abs(deltaX) < Math.abs(deltaY)) {
-    direction = '↑'
-  }
-  if (direction && directions.at(-1) !== direction) {
-    directions.push(direction)
-    import(`./assets/images/${directions.join('')}.svg?raw`)
-      .then((res) => (svgContent.value = res.default))
-      .catch(() => (svgContent.value = ''))
-  }
-  line.set({ points })
-})
 
 const task = computed(() => {
   const taskList = [
@@ -81,24 +56,40 @@ const task = computed(() => {
   return taskList.find((i) => i.id === taskID)
 })
 
-document.addEventListener('mouseup', async (e) => {
-  if (e.button === 2) {
-    // 这里不能用hide,否则窗口隐藏后会暂停渲染
-    window.electron.ipcRenderer.send('execMainWindowMethod', 'minimize')
-    if (task.value) {
-      window.electron.ipcRenderer.send('task', toRaw(task.value))
-    }
-    points.length = 0
-    directions.length = 0
-    line.set({ points: [] })
+window.addEventListener('blur', () => {
+  if (task.value) {
+    window.electron.ipcRenderer.send('task', toRaw(task.value))
   }
+  points.length = 0
+  directions.length = 0
+  line.set({ points: [] })
 })
 
-window.api.onSetFirstPoint((_, point) => {
+window.api.onPoint((_, point) => {
   points.push(point)
-  setTimeout(() => {
-    window.electron.ipcRenderer.send('execMainWindowMethod', 'show')
-  }, 100)
+  line.set({ points })
+  if (points.length <= 1) return
+  const prePonit = points.at(-2)
+  const deltaX = point.x - prePonit!.x
+  const deltaY = point.y - prePonit!.y
+  // 过滤掉小于3的移动
+  if (Math.abs(deltaX) < 3 && Math.abs(deltaY) < 3) return
+  let direction = ''
+  if (deltaX > 0 && Math.abs(deltaY) < deltaX) {
+    direction = '→'
+  } else if (deltaX < 0 && Math.abs(deltaY) < Math.abs(deltaX)) {
+    direction = '←'
+  } else if (deltaY > 0 && Math.abs(deltaX) < deltaY) {
+    direction = '↓'
+  } else if (deltaY < 0 && Math.abs(deltaX) < Math.abs(deltaY)) {
+    direction = '↑'
+  }
+  if (direction && directions.at(-1) !== direction) {
+    directions.push(direction)
+    import(`./assets/images/${directions.join('')}.svg?raw`)
+      .then((res) => (svgContent.value = res.default))
+      .catch(() => (svgContent.value = ''))
+  }
 })
 </script>
 

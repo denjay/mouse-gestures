@@ -3,8 +3,7 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-  onSetFirstPoint: (callback) =>
-    ipcRenderer.on('set-first-point', (_event, point) => callback(_event, point))
+  onPoint: (callback) => ipcRenderer.on('point', (_event, point) => callback(_event, point))
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
