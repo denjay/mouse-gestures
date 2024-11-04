@@ -7,10 +7,12 @@ import { Button, mouse, keyboard, Key } from '@nut-tree-fork/nut-js'
 
 import icon from '../../resources/icon.png?asset'
 
-const exeFilePath = app.isPackaged
-  ? join(dirname(app.getPath('exe')), 'resources', 'DisableCapsLock.exe')
-  : join(__dirname, '../../resources/DisableCapsLock.exe')
-exec(exeFilePath)
+if (process.platform === 'win32') {
+  const exeFilePath = app.isPackaged
+    ? join(dirname(app.getPath('exe')), 'resources', 'DisableCapsLock.exe')
+    : join(__dirname, '../../resources/DisableCapsLock.exe')
+  exec(exeFilePath)
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -31,11 +33,6 @@ function createWindow(): void {
     }
   })
 
-  ipcMain.on('minimizeMainWindow', () => {
-    console.log('minimizeMainWindow::: ')
-    mainWindow.minimize()
-    rightKeyPressed = false
-  })
   ipcMain.on('task', (_, task) => {
     if (task.type === 'shortcut') {
       const keyList = task.shortcut
@@ -46,6 +43,9 @@ function createWindow(): void {
     } else if (task.type === 'command') {
       // TODO: 其他命令
     }
+  })
+  ipcMain.on('minimizeMainWindow', () => {
+    mainWindow.minimize()
   })
 
   let rightKeyPressed = false
@@ -80,9 +80,9 @@ function createWindow(): void {
   })
   uIOhook.start()
 
-  mainWindow.on('ready-to-show', () => {
-    // mainWindow.show()
-  })
+  /* mainWindow.on('ready-to-show', () => {
+    mainWindow.show()
+  }) */
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
