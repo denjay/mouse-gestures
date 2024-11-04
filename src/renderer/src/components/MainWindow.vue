@@ -98,6 +98,9 @@ window.api.onPoint((_, point) => {
       .catch(() => (svgContent.value = ''))
   }
 })
+window.api.onOpenSettingsPage(() => {
+  window.open('#/settings', '设置')
+})
 </script>
 
 <template>

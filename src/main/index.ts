@@ -1,9 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain, screen } from 'electron'
+import { app, BrowserWindow, screen } from 'electron'
 import { exec } from 'child_process'
 import { dirname, join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { uIOhook } from 'uiohook-napi'
-import { Button, mouse, keyboard, Key } from '@nut-tree-fork/nut-js'
+import { initMessageListen } from './message-listen'
+import { initMouseEvent } from './mouse-event'
+import { createTray } from './tray'
 
 import icon from '../../resources/icon.png?asset'
 
@@ -33,59 +34,34 @@ function createWindow(): void {
     }
   })
 
-  ipcMain.on('task', (_, task) => {
-    if (task.type === 'shortcut') {
-      const keyList = task.shortcut
-        .split('+')
-        .map((str) => str.replace(/(^\w)/, (match) => match.toUpperCase()))
-        .map((str) => Key[str])
-      keyboard.type(...keyList)
-    } else if (task.type === 'command') {
-      // TODO: 其他命令
-    }
-  })
-  ipcMain.on('minimizeMainWindow', () => {
-    mainWindow.minimize()
-  })
-
-  let rightKeyPressed = false
-  uIOhook.on('mousedown', (e) => {
-    // 按住alt键时不执行任何操作
-    if (e.altKey) return
-    if (e.button === 2) {
-      rightKeyPressed = true
-    }
-  })
-  uIOhook.on('mouseup', (e) => {
-    if (e.button === 2) {
-      rightKeyPressed = false
-      if (mainWindow.isVisible()) {
-        mainWindow.minimize()
-      }
-    }
-  })
-  const scaleFactor = screen.getPrimaryDisplay().scaleFactor
-  uIOhook.on('mousemove', async (e) => {
-    if (!rightKeyPressed) return
-    const dipPoint = {
-      x: e.x / scaleFactor,
-      y: e.y / scaleFactor
-    }
-    // 要把第一个点传过去,要不然鼠标移动快了的话,轨迹显示不完整
-    mainWindow.webContents.send('point', dipPoint)
-    if (!mainWindow.isVisible()) {
-      await mouse.click(Button.LEFT)
-      mainWindow.show()
-    }
-  })
-  uIOhook.start()
+  initMessageListen(mainWindow)
+  initMouseEvent(mainWindow)
+  createTray(mainWindow)
 
   /* mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   }) */
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+  // 拦截window.open(),设置弹出窗口的属性
+  mainWindow.webContents.setWindowOpenHandler((args) => {
+    if (args.frameName === '设置') {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          // frame: false,
+          // transparent: true,
+          // alwaysOnTop: true,
+          title: '设置',
+          autoHideMenuBar: true,
+          parent: mainWindow, // 设置层级在父窗口之上
+          resizable: false,
+          type: 'toolbar', // 不显示任务栏窗口
+          webPreferences: {
+            preload: join(__dirname, '../preload/index.js')
+          }
+        }
+      }
+    }
     return { action: 'deny' }
   })
 

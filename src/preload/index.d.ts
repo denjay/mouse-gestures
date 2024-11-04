@@ -5,6 +5,7 @@ declare global {
     electron: ElectronAPI
     api: {
       onPoint: (event) => void
+      onOpenSettingsPage: (event) => void
     }
   }
 }

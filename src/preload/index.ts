@@ -3,7 +3,9 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-  onPoint: (callback) => ipcRenderer.on('point', (_event, point) => callback(_event, point))
+  onPoint: (callback) => ipcRenderer.on('point', (_event, point) => callback(_event, point)),
+  onOpenSettingsPage: (callback) =>
+    ipcRenderer.on('open-settings-page', (_event) => callback(_event))
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

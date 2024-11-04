@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "description": "An Electron application with Vue and TypeScript",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": {
+    "name": "denjay",
+    "email": "295077487@qq.com"
+  },
+  "homepage": "https://github.com/denjay/mouse-gestures",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",
@@ -20,10 +23,24 @@
     "build:mac": "npm run build && electron-builder --mac",
     "build:linux": "npm run build && electron-builder --linux"
   },
+  "build": {
+    "productName": "mouse-gestures",
+    "appId": "https://github.com/denjay/mouse-gestures",
+    "linux": {
+      "icon": "build/icons",
+      "category": "Utility",
+      "target": [
+        "deb",
+        "AppImage",
+        "snap"
+      ]
+    }
+  },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
     "@nut-tree-fork/nut-js": "^4.2.2",
+    "auto-launch": "^5.0.6",
     "leafer-ui": "^1.0.7",
     "uiohook-napi": "^1.5.4",
     "vue-router": "^4.4.5"
