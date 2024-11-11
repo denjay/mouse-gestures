@@ -4,11 +4,13 @@ import { Button, mouse } from '@nut-tree-fork/nut-js'
 
 export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
   let rightKeyPressed = false
-  uIOhook.on('mousedown', (e) => {
+  uIOhook.on('mousedown', async (e) => {
     // 按住alt键时不执行任何操作
     if (e.altKey) return
     if (e.button === 2) {
       rightKeyPressed = true
+      const activeWindow = await (await import('get-windows')).activeWindow()
+      console.log('title::: ', activeWindow?.title)
     }
   })
   uIOhook.on('mouseup', (e) => {
