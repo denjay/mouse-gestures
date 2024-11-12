@@ -21,11 +21,12 @@ function createWindow(): void {
     width: screen.getPrimaryDisplay().size.width,
     height: screen.getPrimaryDisplay().size.height,
     resizable: false, // 禁止改变窗口大小
+    focusable: false,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     type: 'toolbar', // 不显示任务栏窗口
-    show: false,
+    show: true,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
@@ -33,6 +34,8 @@ function createWindow(): void {
       sandbox: false
     }
   })
+
+  mainWindow.setIgnoreMouseEvents(true) // 禁止鼠标事件
 
   initMessageListen(mainWindow)
   initMouseEvent(mainWindow)

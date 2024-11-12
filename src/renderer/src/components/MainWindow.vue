@@ -56,17 +56,10 @@ const task = computed(() => {
   return taskList.find((i) => i.id === taskID)
 })
 
-window.addEventListener('blur', () => {
+window.api.onFinished(() => {
   if (task.value) {
     window.electron.ipcRenderer.send('task', toRaw(task.value))
   }
-  points.length = 0
-  directions.length = 0
-  line.set({ points: [] })
-})
-// 避免动作太快导致主窗口无法关闭
-window.addEventListener('click', () => {
-  window.electron.ipcRenderer.send('minimizeMainWindow')
   points.length = 0
   directions.length = 0
   line.set({ points: [] })
@@ -105,10 +98,12 @@ window.api.onOpenSettingsPage(() => {
 
 <template>
   <div id="wrapper">
-    <div id="tips">
+    <div v-if="directions.length" id="tips">
       <div v-if="svgContent" v-html="svgContent"></div>
       <div v-else id="direction">{{ directions.join('') }}</div>
-      <div id="description">{{ task ? task.description : '无效手势' }}</div>
+      <div id="description">
+        {{ task ? task.description : '无效手势' }}
+      </div>
     </div>
   </div>
 </template>
