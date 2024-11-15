@@ -2,7 +2,7 @@
 import { reactive, ref, computed, toRaw /* onMounted, watch, nextTick */ } from 'vue'
 import { Leafer, Line } from 'leafer-ui'
 
-const leafer = new Leafer({ view: window })
+const leafer = new Leafer({ view: window, wheel: { disabled: true } })
 const line = new Line({
   points: [],
   cornerRadius: 5,
@@ -73,7 +73,7 @@ window.api.onPoint((_, point) => {
   const deltaX = point.x - prePonit!.x
   const deltaY = point.y - prePonit!.y
   // 过滤掉小于3的移动
-  if (Math.abs(deltaX) < 3 && Math.abs(deltaY) < 3) return
+  if (Math.abs(deltaX) < 5 && Math.abs(deltaY) < 5) return
   let direction = ''
   if (deltaX > 0 && Math.abs(deltaY) < deltaX) {
     direction = '→'
