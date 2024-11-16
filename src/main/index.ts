@@ -51,14 +51,12 @@ function createWindow(): void {
       return {
         action: 'allow',
         overrideBrowserWindowOptions: {
-          // frame: false,
-          // transparent: true,
-          // alwaysOnTop: true,
           title: '设置',
+          width: 1000,
           autoHideMenuBar: true,
-          parent: mainWindow, // 设置层级在父窗口之上
+          // parent: mainWindow, // 设置层级在父窗口之上
+          // type: 'toolbar', // 不显示任务栏窗口
           resizable: false,
-          type: 'toolbar', // 不显示任务栏窗口
           webPreferences: {
             preload: join(__dirname, '../preload/index.js')
           }

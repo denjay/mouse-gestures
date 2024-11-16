@@ -2,6 +2,14 @@
 import { reactive, ref, computed, toRaw /* onMounted, watch, nextTick */ } from 'vue'
 import { Leafer, Line } from 'leafer-ui'
 
+// 不同的窗口之间不能用pinia共享数据,所以用监听storage的方式同步数据
+const config = ref(JSON.parse(window.localStorage.getItem('config') || '{}'))
+window.addEventListener('storage', (event) => {
+  if (event.key === 'config') {
+    config.value = JSON.parse(event.newValue || '{}')
+  }
+})
+
 const leafer = new Leafer({ view: window, wheel: { disabled: true } })
 const line = new Line({
   points: [],
@@ -14,46 +22,16 @@ leafer.add(line)
 const points: { x: number; y: number }[] = []
 const directions = reactive<string[]>([])
 const svgContent = ref('')
+const curWindowTitle = ref('')
 
 const task = computed(() => {
-  const taskList = [
-    {
-      id: 1,
-      type: 'shortcut', // shortcut | command
-      description: '返回',
-      shortcut: 'alt+left',
-      command: ''
-    },
-    {
-      id: 2,
-      type: 'shortcut',
-      description: '前进',
-      shortcut: 'alt+right',
-      command: ''
-    },
-    {
-      id: 3,
-      type: 'shortcut',
-      description: '向上滚动一屏',
-      shortcut: 'PageUp',
-      command: ''
-    },
-    {
-      id: 4,
-      type: 'shortcut',
-      description: '向下滚动一屏',
-      shortcut: 'PageDown',
-      command: ''
-    }
-  ]
-  const gestureList = [
-    { directions: '←', description: '向左', taskID: 1 },
-    { directions: '→', description: '向右', taskID: 2 },
-    { directions: '↑', description: '向上', taskID: 3 },
-    { directions: '↓', description: '向下', taskID: 4 }
-  ]
-  const taskID = gestureList.find((i) => i.directions === directions.join(''))?.taskID
-  return taskList.find((i) => i.id === taskID)
+  // 排除黑名单里的应用
+  if (curWindowTitle.value && config.value.blacklist.split(';').includes(curWindowTitle.value))
+    return
+  const taskInfoList =
+    config.value.tabInfoList.find((i) => i.windowTitle.split(';').includes(curWindowTitle.value))
+      ?.taskInfoList || []
+  return taskInfoList.find((i) => i.directions === directions.join(''))
 })
 
 window.api.onFinished(() => {
@@ -65,6 +43,9 @@ window.api.onFinished(() => {
   line.set({ points: [] })
 })
 
+window.api.onWindowTitle((_, windowTitle) => {
+  curWindowTitle.value = windowTitle
+})
 window.api.onPoint((_, point) => {
   points.push(point)
   line.set({ points })
@@ -72,7 +53,7 @@ window.api.onPoint((_, point) => {
   const prePonit = points.at(-2)
   const deltaX = point.x - prePonit!.x
   const deltaY = point.y - prePonit!.y
-  // 过滤掉小于3的移动
+  // 过滤掉小于5的移动
   if (Math.abs(deltaX) < 5 && Math.abs(deltaY) < 5) return
   let direction = ''
   if (deltaX > 0 && Math.abs(deltaY) < deltaX) {

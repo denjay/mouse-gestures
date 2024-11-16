@@ -1,5 +1,5 @@
-import { screen } from 'electron'
-import { uIOhook } from 'uiohook-napi'
+import { screen, webContents } from 'electron'
+import { uIOhook, UiohookKey } from 'uiohook-napi'
 import { Button, mouse } from '@nut-tree-fork/nut-js'
 
 export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
@@ -12,7 +12,7 @@ export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
     if (e.button === 2) {
       rightKeyPressed = true
       const activeWindow = await (await import('get-windows')).activeWindow()
-      console.log('title::: ', activeWindow?.title)
+      mainWindow.webContents.send('windowTitle', activeWindow?.owner?.name)
     }
   })
   uIOhook.on('mouseup', (e) => {
@@ -39,5 +39,16 @@ export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
     }
     mainWindow.webContents.send('point', dipPoint)
   })
+  uIOhook.on('keydown', (e) => handleKey(e.keycode, 'keydown'))
+  uIOhook.on('keyup', (e) => handleKey(e.keycode, 'keyup'))
   uIOhook.start()
+}
+
+function handleKey(keycode: number, type: string) {
+  const focusedWebContents = webContents.getFocusedWebContents()
+  const title = focusedWebContents?.mainFrame?.name
+  if (title === '设置') {
+    const key = Object.entries(UiohookKey).find((item) => item[1] === keycode)![0]
+    focusedWebContents!.send('key', { key, type })
+  }
 }

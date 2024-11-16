@@ -3,7 +3,10 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
+  onKey: (callback) => ipcRenderer.on('key', (_event, keyInfo) => callback(_event, keyInfo)),
   onFinished: (callback) => ipcRenderer.on('finished', (_event) => callback(_event)),
+  onWindowTitle: (callback) =>
+    ipcRenderer.on('windowTitle', (_event, windowTitle) => callback(_event, windowTitle)),
   onPoint: (callback) => ipcRenderer.on('point', (_event, point) => callback(_event, point)),
   onOpenSettingsPage: (callback) =>
     ipcRenderer.on('open-settings-page', (_event) => callback(_event))
