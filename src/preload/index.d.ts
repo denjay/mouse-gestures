@@ -6,7 +6,7 @@ declare global {
     api: {
       onKey: (event) => void
       onFinished: (event) => void
-      onWindowTitle: (event) => void
+      onTaskInfoList: (event) => void
       onPoint: (event) => void
       onOpenSettingsPage: (event) => void
     }

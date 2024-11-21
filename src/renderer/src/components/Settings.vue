@@ -12,7 +12,7 @@ const handleTabsEdit = (targetName: TabPaneName | undefined, action: 'remove' | 
     config.tabInfoList.push({
       name: newTabName,
       title: '新标签',
-      windowTitle: '',
+      applications: '',
       taskInfoList: basicTaskInfoList
     })
     editableTabsValue.value = newTabName
@@ -92,7 +92,7 @@ function getShortcut(row) {
         >
           <el-form :model="item" label-width="auto">
             <el-form-item label="适用应用" required>
-              <el-input v-model="item.windowTitle" />
+              <el-input v-model="item.applications" />
             </el-form-item>
           </el-form>
           <el-table :data="item.taskInfoList" style="width: 100%">

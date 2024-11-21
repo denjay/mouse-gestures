@@ -1,36 +1,61 @@
-import { screen, webContents } from 'electron'
+import { ipcMain, screen, webContents } from 'electron'
 import { uIOhook, UiohookKey } from 'uiohook-napi'
 import { Button, mouse } from '@nut-tree-fork/nut-js'
 
 export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
-  let rightKeyPressed = false
+  let config: Config | null = null
+  ipcMain.on('config', async (_, _config) => {
+    config = _config
+  })
+  let isHit = false
   let mouseMoved = false
   const scaleFactor = screen.getPrimaryDisplay().scaleFactor
   uIOhook.on('mousedown', async (e) => {
+    // 按下的不是右键则不执行任何操作
+    if (e.button !== 2) return
     // 按住alt键时不执行任何操作
     if (e.altKey) return
-    if (e.button === 2) {
-      rightKeyPressed = true
-      const activeWindow = await (await import('get-windows')).activeWindow()
-      mainWindow.webContents.send('windowTitle', activeWindow?.owner?.name)
-    }
+    // 未获取到配置则不执行任何操作
+    if (!config) return
+    // 获取当前应用
+    const application = (await (await import('get-windows')).activeWindow())?.owner?.name
+    // 未获取到应用名或者应用在黑名单中则不执行任何操作
+    if (!application || config.blacklist.split(';').includes(application)) return
+    const tabInfo = config.tabInfoList.find(({ applications }) =>
+      applications
+        .split(';')
+        .map((item) => item.trim())
+        .includes(application)
+    )
+    // 应用不在适用列表中则不执行任何操作
+    if (!tabInfo) return
+    isHit = true
+    mainWindow.webContents.send('taskInfoList', tabInfo.taskInfoList)
   })
+
+  // 用于控制鼠标是否响应右键释放,如果不释放的话鼠标在主窗口的所有事件都不能触发,但是这里要处理第二次鼠标释放
+  let ignoreRightButtonRelease = false
   uIOhook.on('mouseup', (e) => {
-    if (e.button === 2) {
-      rightKeyPressed = false
-      if (mouseMoved) {
-        mainWindow.setIgnoreMouseEvents(true)
-        mainWindow.webContents.send('finished')
-        mouseMoved = false
-      }
+    if (e.button !== 2) return
+    if (ignoreRightButtonRelease) {
+      ignoreRightButtonRelease = false
+      return
+    }
+    isHit = false
+    if (mouseMoved) {
+      mainWindow.setIgnoreMouseEvents(true)
+      mainWindow.webContents.send('finished')
+      mouseMoved = false
     }
   })
   uIOhook.on('mousemove', async (e) => {
-    if (!rightKeyPressed) return
+    if (!isHit) return
     if (!mouseMoved) {
       mouseMoved = true
       mainWindow.setIgnoreMouseEvents(false)
       await mouse.click(Button.LEFT)
+      await mouse.releaseButton(Button.RIGHT)
+      ignoreRightButtonRelease = true
       return
     }
     const dipPoint = {
@@ -51,4 +76,10 @@ function handleKey(keycode: number, type: string) {
     const key = Object.entries(UiohookKey).find((item) => item[1] === keycode)![0]
     focusedWebContents!.send('key', { key, type })
   }
+}
+
+interface Config {
+  disableCapsLock: boolean
+  blacklist: string
+  tabInfoList: { applications: string; taskInfoList: [] }[]
 }

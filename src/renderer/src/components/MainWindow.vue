@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { reactive, ref, computed, toRaw /* onMounted, watch, nextTick */ } from 'vue'
 import { Leafer, Line } from 'leafer-ui'
+import type { Config, TaskList } from '../stores/config'
 
 // 不同的窗口之间不能用pinia共享数据,所以用监听storage的方式同步数据
-const config = ref(JSON.parse(window.localStorage.getItem('config') || '{}'))
+const config = ref<Config>(JSON.parse(window.localStorage.getItem('config') || '{}'))
+window.electron.ipcRenderer.send('config', toRaw(config.value))
 window.addEventListener('storage', (event) => {
   if (event.key === 'config') {
     config.value = JSON.parse(event.newValue || '{}')
+    window.electron.ipcRenderer.send('config', toRaw(config.value))
   }
 })
 
@@ -22,16 +25,10 @@ leafer.add(line)
 const points: { x: number; y: number }[] = []
 const directions = reactive<string[]>([])
 const svgContent = ref('')
-const curWindowTitle = ref('')
+const taskInfoList = ref<Array<TaskList>>([])
 
 const task = computed(() => {
-  // 排除黑名单里的应用
-  if (curWindowTitle.value && config.value.blacklist.split(';').includes(curWindowTitle.value))
-    return
-  const taskInfoList =
-    config.value.tabInfoList.find((i) => i.windowTitle.split(';').includes(curWindowTitle.value))
-      ?.taskInfoList || []
-  return taskInfoList.find((i) => i.directions === directions.join(''))
+  return taskInfoList.value.find((i) => i.directions === directions.join(''))
 })
 
 window.api.onFinished(() => {
@@ -43,8 +40,8 @@ window.api.onFinished(() => {
   line.set({ points: [] })
 })
 
-window.api.onWindowTitle((_, windowTitle) => {
-  curWindowTitle.value = windowTitle
+window.api.onTaskInfoList((_, _taskInfoList: []) => {
+  taskInfoList.value = _taskInfoList
 })
 window.api.onPoint((_, point) => {
   points.push(point)
@@ -78,8 +75,14 @@ window.api.onOpenSettingsPage(() => {
 </script>
 
 <template>
-  <div id="wrapper">
-    <div v-if="directions.length" id="tips">
+  <div v-if="directions.length" id="tips">
+    <div v-for="taskInfo in taskInfoList" :key="taskInfo.directions">
+      <img :src="`/src/assets/images/${taskInfo.directions}.svg`" />
+      <span>{{ taskInfo.description }}</span>
+    </div>
+  </div>
+  <div id="indicator-wrapper">
+    <div v-if="directions.length" id="indicator">
       <div v-if="svgContent" v-html="svgContent"></div>
       <div v-else id="direction">{{ directions.join('') }}</div>
       <div id="description">
@@ -90,7 +93,30 @@ window.api.onOpenSettingsPage(() => {
 </template>
 
 <style>
-#wrapper {
+#tips {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  z-index: 10;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  padding: 10px;
+  > div {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  > div:hover {
+    color: rgb(185, 225, 52);
+  }
+  img {
+    filter: invert(100%);
+    margin-right: 5px;
+  }
+}
+#indicator-wrapper {
   z-index: 1;
   position: fixed;
   display: flex;
@@ -98,7 +124,7 @@ window.api.onOpenSettingsPage(() => {
   align-items: center;
   top: 70%;
   width: 100%;
-  & #tips {
+  & #indicator {
     display: flex;
     flex-direction: column;
     align-items: center;
