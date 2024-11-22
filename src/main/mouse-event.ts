@@ -7,7 +7,7 @@ export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
   ipcMain.on('config', async (_, _config) => {
     config = _config
   })
-  let isHit = false
+  let tabInfo: { applications: string; taskInfoList: [] } | undefined
   let mouseMoved = false
   const scaleFactor = screen.getPrimaryDisplay().scaleFactor
   uIOhook.on('mousedown', async (e) => {
@@ -21,16 +21,12 @@ export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
     const application = (await (await import('get-windows')).activeWindow())?.owner?.name
     // 未获取到应用名或者应用在黑名单中则不执行任何操作
     if (!application || config.blacklist.split(';').includes(application)) return
-    const tabInfo = config.tabInfoList.find(({ applications }) =>
+    tabInfo = config.tabInfoList.find(({ applications }) =>
       applications
         .split(';')
         .map((item) => item.trim())
         .includes(application)
     )
-    // 应用不在适用列表中则不执行任何操作
-    if (!tabInfo) return
-    isHit = true
-    mainWindow.webContents.send('taskInfoList', tabInfo.taskInfoList)
   })
 
   // 用于控制鼠标是否响应右键释放,如果不释放的话鼠标在主窗口的所有事件都不能触发,但是这里要处理第二次鼠标释放
@@ -41,7 +37,7 @@ export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
       ignoreRightButtonRelease = false
       return
     }
-    isHit = false
+    tabInfo = undefined
     if (mouseMoved) {
       mainWindow.setIgnoreMouseEvents(true)
       mainWindow.webContents.send('finished')
@@ -49,9 +45,10 @@ export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
     }
   })
   uIOhook.on('mousemove', async (e) => {
-    if (!isHit) return
+    if (!tabInfo) return
     if (!mouseMoved) {
       mouseMoved = true
+      mainWindow.webContents.send('taskInfoList', tabInfo.taskInfoList)
       mainWindow.setIgnoreMouseEvents(false)
       await mouse.click(Button.LEFT)
       await mouse.releaseButton(Button.RIGHT)

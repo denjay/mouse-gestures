@@ -106,11 +106,12 @@ window.api.onOpenSettingsPage(() => {
     display: flex;
     align-items: center;
     font-size: 12px;
-    cursor: pointer;
+    /* cursor: pointer; */
+    user-select: none;
   }
-  > div:hover {
+  /* > div:hover {
     color: rgb(185, 225, 52);
-  }
+  } */
   img {
     filter: invert(100%);
     margin-right: 5px;

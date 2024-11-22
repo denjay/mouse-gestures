@@ -32,16 +32,16 @@ export const basicTaskInfoList: Array<TaskList> = [
   },
   {
     type: 'shortcut',
-    directions: '↑↓',
-    description: '滚动到页尾',
-    keyListGroup: [['End']],
+    directions: '↓↑',
+    description: '滚动到页首',
+    keyListGroup: [['Home']],
     command: ''
   },
   {
     type: 'shortcut',
-    directions: '↓↑',
-    description: '滚动到页首',
-    keyListGroup: [['Home']],
+    directions: '↑↓',
+    description: '滚动到页尾',
+    keyListGroup: [['End']],
     command: ''
   },
   {

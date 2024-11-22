@@ -56,7 +56,11 @@ function createWindow(): void {
           autoHideMenuBar: true,
           // parent: mainWindow, // 设置层级在父窗口之上
           // type: 'toolbar', // 不显示任务栏窗口
-          resizable: false,
+          icon: join(__dirname, '../../resources/icon.png'),
+          titleBarStyle: 'hidden',
+          titleBarOverlay: {
+            color: '#ffffff' // 标题栏背景颜色
+          },
           webPreferences: {
             preload: join(__dirname, '../preload/index.js')
           }
