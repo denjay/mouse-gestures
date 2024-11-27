@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref, reactive } from 'vue'
-import type { TabPaneName } from 'element-plus'
-import { CloseBold, Setting } from '@element-plus/icons-vue'
+import { ElMessageBox, type TabPaneName } from 'element-plus'
+import { CloseBold, Setting, Edit } from '@element-plus/icons-vue'
 import { config, basicTaskInfoList, TaskList } from '../stores/config'
 
 const editableTabsValue = ref(config.tabInfoList[0].name)
@@ -71,6 +71,16 @@ function getShortcut(row) {
     return acc
   }, '')
 }
+function editName(tabInfo) {
+  ElMessageBox.prompt('', '修改标签名称', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    inputPattern: /^.+$/,
+    inputErrorMessage: '请输入合适的标签名称'
+  }).then(({ value }) => {
+    tabInfo.title = value
+  })
+}
 </script>
 
 <template>
@@ -89,12 +99,17 @@ function getShortcut(row) {
           @edit="handleTabsEdit"
         >
           <el-form :model="config" label-width="auto" style="padding: 0 10px"> </el-form>
-          <el-tab-pane
-            v-for="item in config.tabInfoList"
-            :key="item.name"
-            :label="item.title"
-            :name="item.name"
-          >
+          <el-tab-pane v-for="item in config.tabInfoList" :key="item.name" :name="item.name">
+            <template #label>
+              <span style="margin-right: 5px">{{ item.title }}</span>
+              <el-icon
+                v-show="item.name === editableTabsValue"
+                @click="editName(item)"
+                title="编辑标签名称"
+              >
+                <Edit />
+              </el-icon>
+            </template>
             <el-form :model="item" label-width="auto">
               <el-form-item label="适用应用" required>
                 <el-input v-model="item.applications" />
