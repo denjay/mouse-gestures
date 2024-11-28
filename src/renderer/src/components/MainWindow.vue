@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { reactive, ref, computed, toRaw /* onMounted, watch, nextTick */ } from 'vue'
 import { Leafer, Line } from 'leafer-ui'
-import type { Config, TaskList } from '../stores/config'
+import type { Config, TaskList } from '../stores/data'
+import { defaultConfig } from '../stores/data'
 
 // 不同的窗口之间不能用pinia共享数据,所以用监听storage的方式同步数据
-const config = ref<Config>(JSON.parse(window.localStorage.getItem('config') || '{}'))
+const config = window.localStorage.getItem('config')
+  ? ref<Config>(JSON.parse(window.localStorage.getItem('config')!))
+  : ref<Config>(defaultConfig)
 window.electron.ipcRenderer.send('config', toRaw(config.value))
 window.addEventListener('storage', (event) => {
   if (event.key === 'config') {
     config.value = JSON.parse(event.newValue || '{}')
     window.electron.ipcRenderer.send('config', toRaw(config.value))
+    line.set({ visible: config.value.shopTrajectory })
   }
 })
 
@@ -18,7 +22,8 @@ const line = new Line({
   points: [],
   cornerRadius: 5,
   strokeWidth: 5,
-  stroke: 'rgb(50,205,121)'
+  stroke: 'rgb(50,205,121)',
+  visible: config.value.shopTrajectory
 })
 leafer.add(line)
 
@@ -72,12 +77,15 @@ window.api.onPoint((_, point) => {
 window.api.onOpenSettingsPage(() => {
   window.open('#/settings', '设置')
 })
+function getSvgIcon(directions: string) {
+  return new URL(`/src/assets/images/${directions}.svg`, import.meta.url).href
+}
 </script>
 
 <template>
-  <div v-if="directions.length" id="tips">
+  <div v-if="config.showTips && directions.length" id="tips">
     <div v-for="taskInfo in taskInfoList" :key="taskInfo.directions">
-      <img :src="`/src/assets/images/${taskInfo.directions}.svg`" />
+      <img :src="getSvgIcon(taskInfo.directions)" />
       <span>{{ taskInfo.description }}</span>
     </div>
   </div>

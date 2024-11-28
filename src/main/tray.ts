@@ -8,15 +8,15 @@ export function createTray(mainWindow: Electron.BrowserWindow) {
     const minecraftAutoLauncher = new AutoLaunch({ name: 'mouse-gestures' })
     const template = [
       {
-        label: '退出',
-        click: () => {
-          mainWindow.close()
-        }
-      },
-      {
         label: '设置',
         click: () => {
           mainWindow.webContents.send('open-settings-page')
+        }
+      },
+      {
+        label: '退出',
+        click: () => {
+          mainWindow.close()
         }
       }
     ]

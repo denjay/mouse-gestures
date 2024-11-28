@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import { ref, reactive } from 'vue'
 import { ElMessageBox, type TabPaneName } from 'element-plus'
-import { CloseBold, Setting, Edit } from '@element-plus/icons-vue'
-import { config, basicTaskInfoList, TaskList } from '../stores/config'
+import { CloseBold, Setting, Edit, InfoFilled } from '@element-plus/icons-vue'
+import { config } from '../stores/config'
+import type { TaskList } from '../stores/data'
+import { taskInfoList, defaultConfig } from '../stores/data'
 
 const editableTabsValue = ref(config.tabInfoList[0].name)
 
@@ -13,7 +15,7 @@ const handleTabsEdit = (targetName: TabPaneName | undefined, action: 'remove' | 
       name: newTabName,
       title: '新标签',
       applications: '',
-      taskInfoList: basicTaskInfoList
+      taskInfoList
     })
     editableTabsValue.value = newTabName
   } else if (action === 'remove') {
@@ -81,6 +83,9 @@ function editName(tabInfo) {
     tabInfo.title = value
   })
 }
+function getSvgIcon(directions: string) {
+  return new URL(`/src/assets/images/${directions}.svg`, import.meta.url).href
+}
 </script>
 
 <template>
@@ -91,6 +96,19 @@ function editName(tabInfo) {
   <el-scrollbar height="calc(100vh - 30px)">
     <el-tabs tab-position="left" style="padding: 20px 10px">
       <el-tab-pane label="手势设置">
+        <el-form :model="config" label-width="auto" inline style="padding: 10px">
+          <el-form-item label="显示操作提示">
+            <el-switch v-model="config.showTips" />
+          </el-form-item>
+          <el-form-item label="显示鼠标轨迹">
+            <el-switch v-model="config.shopTrajectory" />
+          </el-form-item>
+          <el-form-item>
+            <el-link type="primary" @click="config.$patch(defaultConfig)">
+              重置所有手势设置
+            </el-link>
+          </el-form-item>
+        </el-form>
         <el-tabs
           v-model="editableTabsValue"
           type="border-card"
@@ -111,28 +129,31 @@ function editName(tabInfo) {
               </el-icon>
             </template>
             <el-form :model="item" label-width="auto">
-              <el-form-item label="适用应用" required>
+              <el-form-item required>
+                <template #label>
+                  <p class="applications-label">
+                    <span>适用应用</span>
+                    <el-tooltip
+                      effect="dark"
+                      content="多个应用名称用英文分号隔开，使用全局快捷键ctrl+alt+n可复制当前应用名称到剪贴板"
+                      placement="top"
+                    >
+                      <el-icon><InfoFilled /></el-icon>
+                    </el-tooltip>
+                  </p>
+                </template>
                 <el-input v-model="item.applications" />
               </el-form-item>
             </el-form>
             <el-table :data="item.taskInfoList" style="width: 100%">
-              <el-table-column prop="directions" label="手势" width="60px">
+              <el-table-column prop="directions" label="手势" width="55px">
                 <template #default="scope">
-                  <img :src="`/src/assets/images/${scope.row.directions}.svg`" />
+                  <img :src="getSvgIcon(scope.row.directions)" />
                 </template>
               </el-table-column>
-              <el-table-column prop="type" label="动作类型" width="120px">
-                <template #default="scope">
-                  <el-select v-model="scope.row.type" placeholder="Select">
-                    <el-option key="shortcut" label="快捷键" value="shortcut" />
-                    <el-option key="command" label="命令" value="command" />
-                  </el-select>
-                </template>
-              </el-table-column>
-              <el-table-column :prop="item.type" label="">
+              <el-table-column prop="shortcut" label="快捷键">
                 <template #default="scope">
                   <el-input
-                    v-if="scope.row.type === 'shortcut'"
                     readonly
                     :value="getShortcut(scope.row)"
                     :placeholder="curRow === scope.row ? '正在录制按键' : '请录制按键'"
@@ -146,7 +167,7 @@ function editName(tabInfo) {
                       <img
                         src="/src/assets/images/keyboard.svg"
                         style="width: 20px; height: 20px"
-                        @click="scope.row[scope.row.type] = ''"
+                        @click="scope.row.shortcut = ''"
                       />
                     </template>
                     <template #suffix>
@@ -154,12 +175,6 @@ function editName(tabInfo) {
                         <CloseBold />
                       </el-icon>
                     </template>
-                  </el-input>
-                  <el-input
-                    v-else-if="scope.row.type === 'command'"
-                    v-model="scope.row[scope.row.type]"
-                    placeholder="请输入命令"
-                  >
                   </el-input>
                 </template>
               </el-table-column>
@@ -171,11 +186,8 @@ function editName(tabInfo) {
             </el-table>
           </el-tab-pane>
         </el-tabs>
-        <el-form-item label="黑名单" label-width="90px" style="margin: 25px 10px">
-          <el-input v-model="config.blacklist" placeholder="请输入应用名" />
-        </el-form-item>
       </el-tab-pane>
-      <el-tab-pane label="CapsLock设置">
+      <el-tab-pane label="CapsLock(待开发)">
         <el-form :model="config" label-width="auto" style="padding: 0 10px">
           <el-form-item label="CapsLock功能键">
             <el-switch v-model="config.disableCapsLock" />
@@ -194,5 +206,10 @@ function editName(tabInfo) {
   gap: 5px;
   height: 30px;
   padding: 0 10px;
+}
+.applications-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 </style>

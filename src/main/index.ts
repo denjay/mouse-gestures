@@ -1,19 +1,11 @@
-import { app, BrowserWindow, screen } from 'electron'
-import { exec } from 'child_process'
-import { dirname, join } from 'path'
+import { app, BrowserWindow, clipboard, globalShortcut, screen, Notification } from 'electron'
+import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { initMessageListen } from './message-listen'
 import { initMouseEvent } from './mouse-event'
 import { createTray } from './tray'
 
 import icon from '../../resources/icon.png?asset'
-
-if (process.platform === 'win32') {
-  const exeFilePath = app.isPackaged
-    ? join(dirname(app.getPath('exe')), 'resources', 'DisableCapsLock.exe')
-    : join(__dirname, '../../resources/DisableCapsLock.exe')
-  exec(exeFilePath)
-}
 
 function createWindow(): void {
   // Create the browser window.
@@ -40,6 +32,27 @@ function createWindow(): void {
   initMessageListen(mainWindow)
   initMouseEvent(mainWindow)
   createTray(mainWindow)
+
+  // 注册全局快捷键
+  if (!globalShortcut.isRegistered('CommandOrControl+Alt+N')) {
+    globalShortcut.register('CommandOrControl+Alt+N', async () => {
+      // 获取当前应用名称并复制到剪贴板
+      const application = (await (await import('get-windows')).activeWindow())?.owner?.name
+      if (application) {
+        clipboard.writeText(application)
+        if (Notification.isSupported()) {
+          new Notification({
+            title: '丁丁鼠标手势',
+            body: `应用名称：${application}，已复制到剪贴板`
+          }).show()
+        }
+      } else {
+        if (Notification.isSupported()) {
+          new Notification({ title: '丁丁鼠标手势', body: '应用名称未知' }).show()
+        }
+      }
+    })
+  }
 
   /* mainWindow.on('ready-to-show', () => {
     mainWindow.show()

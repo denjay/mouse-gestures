@@ -1,11 +1,26 @@
-import { ipcMain, screen, webContents } from 'electron'
+import { ChildProcessWithoutNullStreams, spawn } from 'child_process'
+import { dirname, join } from 'path'
+import { app, ipcMain, screen, webContents } from 'electron'
 import { uIOhook, UiohookKey } from 'uiohook-napi'
 import { Button, mouse } from '@nut-tree-fork/nut-js'
 
 export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
   let config: Config | null = null
+  let disableCapsLockProcess: ChildProcessWithoutNullStreams | null = null
   ipcMain.on('config', async (_, _config) => {
     config = _config
+    if (process.platform !== 'win32') return
+    if (config?.disableCapsLock) {
+      const exeFilePath = app.isPackaged
+        ? join(dirname(app.getPath('exe')), 'resources', 'DisableCapsLock.exe')
+        : join(__dirname, '../../resources/DisableCapsLock.exe')
+      disableCapsLockProcess = spawn(exeFilePath)
+    } else {
+      if (disableCapsLockProcess) {
+        disableCapsLockProcess.kill()
+        disableCapsLockProcess = null
+      }
+    }
   })
   let tabInfo: { applications: string; taskInfoList: [] } | undefined
   let mouseMoved = false
@@ -16,11 +31,11 @@ export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
     // 按住alt键时不执行任何操作
     if (e.altKey) return
     // 未获取到配置则不执行任何操作
-    if (!config) return
+    if (!config?.tabInfoList?.length) return
     // 获取当前应用
     const application = (await (await import('get-windows')).activeWindow())?.owner?.name
-    // 未获取到应用名或者应用在黑名单中则不执行任何操作
-    if (!application || config.blacklist.split(';').includes(application)) return
+    // 未获取到应用名则不执行任何操作
+    if (!application) return
     tabInfo = config.tabInfoList.find(({ applications }) =>
       applications
         .split(';')
@@ -77,6 +92,5 @@ function handleKey(keycode: number, type: string) {
 
 interface Config {
   disableCapsLock: boolean
-  blacklist: string
   tabInfoList: { applications: string; taskInfoList: [] }[]
 }
