@@ -54,7 +54,7 @@ export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
     }
     tabInfo = undefined
     if (mouseMoved) {
-      mainWindow.setIgnoreMouseEvents(true)
+      // mainWindow.setIgnoreMouseEvents(true)
       mainWindow.webContents.send('finished')
       mouseMoved = false
     }

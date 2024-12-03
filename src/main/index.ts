@@ -12,8 +12,8 @@ function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: screen.getPrimaryDisplay().size.width,
     height: screen.getPrimaryDisplay().size.height,
-    resizable: false, // 禁止改变窗口大小
-    focusable: false,
+    // resizable: false, // 禁止改变窗口大小
+    // focusable: false,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
