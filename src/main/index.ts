@@ -29,7 +29,7 @@ function createWindow(): void {
 
   mainWindow.setIgnoreMouseEvents(true) // 禁止鼠标事件
 
-  initMessageListen(mainWindow)
+  initMessageListen()
   initMouseEvent(mainWindow)
   createTray(mainWindow)
 

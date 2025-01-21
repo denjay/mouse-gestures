@@ -2,7 +2,7 @@ import { ChildProcessWithoutNullStreams, spawn } from 'child_process'
 import { dirname, join } from 'path'
 import { app, ipcMain, screen, webContents } from 'electron'
 import { uIOhook, UiohookKey } from 'uiohook-napi'
-import { Button, mouse } from '@nut-tree-fork/nut-js'
+import { Button, Key, keyboard, mouse } from '@nut-tree-fork/nut-js'
 
 export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
   let config: Config | null = null
@@ -44,11 +44,12 @@ export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
     )
   })
 
-  // 用于控制鼠标是否响应右键释放,如果不释放的话鼠标在主窗口的所有事件都不能触发,但是这里要处理第二次鼠标释放
+  // windows系统下,通过命令释放右键会触发mouseup事件,要忽略该事件,通过ignoreRightButtonRelease变量来判断是否忽略mouseup事件
+  // 但是在linux系统下,mouseup事件不会触发,所以要区分windows和linux系统
   let ignoreRightButtonRelease = false
   uIOhook.on('mouseup', (e) => {
     if (e.button !== 2) return
-    if (ignoreRightButtonRelease) {
+    if (process.platform === 'win32' && ignoreRightButtonRelease) {
       ignoreRightButtonRelease = false
       return
     }
@@ -65,7 +66,7 @@ export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
       mouseMoved = true
       mainWindow.webContents.send('taskInfoList', tabInfo.taskInfoList)
       mainWindow.setIgnoreMouseEvents(false)
-      await mouse.click(Button.LEFT)
+      await keyboard.type(Key.Escape)
       await mouse.releaseButton(Button.RIGHT)
       ignoreRightButtonRelease = true
       return

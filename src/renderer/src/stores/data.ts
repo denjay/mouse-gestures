@@ -6,7 +6,9 @@ export const defaultConfig: Config = {
     {
       name: 'vscode',
       title: 'vscode',
-      applications: 'Visual Studio Code;Visual Studio Code - Insiders',
+      applications: navigator.userAgent.includes('Win')
+        ? 'Visual Studio Code;Visual Studio Code - Insiders'
+        : 'Code;Code - Insiders',
       taskInfoList: [
         {
           directions: '↑',
@@ -96,7 +98,9 @@ export const defaultConfig: Config = {
     {
       name: 'browser',
       title: '浏览器',
-      applications: 'Google Chrome;Microsoft Edge;QQBrowser;Quark',
+      applications: navigator.userAgent.includes('Win')
+        ? 'Google Chrome;Microsoft Edge;QQBrowser;Quark'
+        : 'Google-chrome;Microsoft-edge;Org.deepin.browser',
       taskInfoList: [
         {
           directions: '↑',
