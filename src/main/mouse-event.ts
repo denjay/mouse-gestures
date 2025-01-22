@@ -66,7 +66,12 @@ export function initMouseEvent(mainWindow: Electron.BrowserWindow) {
       mouseMoved = true
       mainWindow.webContents.send('taskInfoList', tabInfo.taskInfoList)
       mainWindow.setIgnoreMouseEvents(false)
-      await keyboard.type(Key.Escape)
+      // linux和windows下行为不同
+      if (process.platform === 'win32') {
+        await mouse.click(Button.LEFT)
+      } else {
+        await keyboard.type(Key.Escape)
+      }
       await mouse.releaseButton(Button.RIGHT)
       ignoreRightButtonRelease = true
       return

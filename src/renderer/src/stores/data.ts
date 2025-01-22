@@ -28,7 +28,9 @@ export const defaultConfig: Config = {
         {
           directions: '→',
           description: '重做',
-          keyListGroup: [['Ctrl', 'Shift', 'Z']]
+          keyListGroup: navigator.userAgent.includes('Win')
+            ? [['Ctrl', 'Shift', 'Z']]
+            : [['Ctrl', 'Y']]
         },
         {
           directions: '↓↑',
@@ -91,7 +93,9 @@ export const defaultConfig: Config = {
         {
           directions: '→↓',
           description: '格式化文档',
-          keyListGroup: [['Shift', 'Alt', 'F']]
+          keyListGroup: navigator.userAgent.includes('Win')
+            ? [['Shift', 'Alt', 'F']]
+            : [['Ctrl', 'Shift', 'I']]
         }
       ]
     },
