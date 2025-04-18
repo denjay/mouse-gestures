@@ -104,7 +104,10 @@ function getSvgIcon(directions: string) {
             <el-switch v-model="config.shopTrajectory" />
           </el-form-item>
           <el-form-item>
-            <el-link type="primary" @click="config.$patch(defaultConfig)">
+            <el-link
+              type="primary"
+              @click="config.$patch(JSON.parse(JSON.stringify(defaultConfig)))"
+            >
               重置所有手势设置
             </el-link>
           </el-form-item>
